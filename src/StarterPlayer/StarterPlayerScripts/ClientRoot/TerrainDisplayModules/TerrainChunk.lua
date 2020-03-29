@@ -34,25 +34,6 @@ function TerrainChunk.new(index, worldData, transform, rootModel)
 	return self
 end
 
---[[
-function TerrainChunk:draw()
-	if not self.isDrawn then
-		local tileSize = WorldConfig.TILE_SIZE
-		for tileId, binary, x, y, index in self.worldData:chunk_iterator(self.index) do
-			-- tileid 0 ??
-			if tileId > 0 then
-				local part = id[tileId]:Clone()
-				part.CFrame = self.transform * CFrame.new(tileSize * Vector3.new(x + .5, -(y + .5), -binary))
-				part.Parent = self.model
-				self.parts[index] = part
-			end
-		end
-		self.isDrawn = true
-	end
-	
-	self.model.Parent = self.rootModel
-end
-]]
 function TerrainChunk:calculateChunkBlocks()
 	local blocks = {}
 	local visited = {}
@@ -142,7 +123,6 @@ end
 
 
 function TerrainChunk:updateTile(tileX, tileY)
-	-- poke block and draw
 	local tileIndex = WorldConfig.tileXYtoIndex(tileX, tileY)
 	local bx, by = WorldConfig.tileXYtoBinaryXY(tileX, tileY)
 	

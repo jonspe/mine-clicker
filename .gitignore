@@ -1,5 +1,2 @@
-*
-!*/
-!/rojo_project/**
-!README.md
-!.gitignore
+/design
+/rbxl

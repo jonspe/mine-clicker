@@ -8,6 +8,18 @@ local Timer = require(ROOT.HelperModules.Timer).new()
 local WorldConfig = require(ROOT.DataModules.WorldConfig)
 
 
+-- For efficiency's sake
+local BITS = WorldConfig.BITS
+local MAX_UINT = WorldConfig.MAX_UINT
+
+local MAP_X = WorldConfig.MAP_X
+local MAP_Y = WorldConfig.MAP_Y
+
+local CHUNK_COL = WorldConfig.CHUNK_COL
+local CHUNK_ROW = WorldConfig.CHUNK_ROW
+local CHUNK_DIM = WorldConfig.CHUNK_DIM
+local CHUNK_TILES = WorldConfig.CHUNK_TILES
+local CHUNK_COUNT = WorldConfig.CHUNK_COUNT
 
 local bor = bit32.bor
 local lshift = bit32.lshift
@@ -49,8 +61,12 @@ local function string_int_iter(data)
 	end
 end
 
-
-
+local function inBounds(x, y)
+	if x < 0 or y < 0 or x >= MAP_X or y >= MAP_Y then
+		return false
+	end
+	return true
+end
 
 
 
@@ -77,23 +93,21 @@ WorldData.new = function(terrainGen)
 	return self
 end
 
-
+function WorldData:initZeroBinaryData()
+	for chunkIndex = 1, CHUNK_COUNT do
+		self.chunkBinaryData[chunkIndex] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+	end
+end
 --efficiencyscape
-local BITS = WorldConfig.BITS
-local MAX_UINT = WorldConfig.MAX_UINT
-
-local MAP_X = WorldConfig.MAP_X
-local MAP_Y = WorldConfig.MAP_Y
-
-local CHUNK_COL = WorldConfig.CHUNK_COL
-local CHUNK_ROW = WorldConfig.CHUNK_ROW
-local CHUNK_DIM = WorldConfig.CHUNK_DIM
-local CHUNK_TILES = WorldConfig.CHUNK_TILES
-local CHUNK_COUNT = WorldConfig.CHUNK_COUNT
 
 
--- Iterates through all chunk items
--- gives tileId, binary, x, y, tileIndex
+
+--[[**
+	Iterator for all tiles at specified chunk.
+
+	@param [t:number] chunkIndex
+	@returns tileId, binary, x, y, tileIndex each iteration
+--**]]
 function WorldData:chunk_iterator(chunkIndex)
 	local index = -1
 	local tile = self.chunkTileData[chunkIndex]
@@ -109,26 +123,6 @@ function WorldData:chunk_iterator(chunkIndex)
 			return tile[index+1], extract(binary[y+1], x), x, y, index+1
 		end
 	end
-end
-
-
-
-
--- MEMBER FUNCTIONS
-
-
-function WorldData:initZeroBinaryData()
-	for chunkIndex = 1, CHUNK_COUNT do
-		self.chunkBinaryData[chunkIndex] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
-	end
-end
-
-
-local function inBounds(x, y)
-	if x < 0 or y < 0 or x >= WorldConfig.MAP_X or y >= WorldConfig.MAP_Y then
-		return false
-	end
-	return true
 end
 
 function WorldData:getBinary(x, y)
@@ -173,10 +167,6 @@ function WorldData:setTile(x, y, tileId)
 	
 	self.tileChangedSignal:Fire(x, y, tileId)
 end
-
-
-
-
 
 function WorldData:loadBinaryData(dataString)
 	local chunkBuffer = {}

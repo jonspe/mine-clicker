@@ -4,56 +4,75 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ROOT = script.Parent
 
 local TerrainGenerator = require(ROOT.TerrainGenerationModules.TerrainGenerator)
-local ImageProcessor = require(ROOT.TerrainGenerationModules.ImageProcessor)
+local ImageLayer = require(ROOT.TerrainGenerationModules.ImageLayer)
 local DrawFunctions = require(ROOT.TerrainGenerationModules.DrawFunctions)
+local FilterFunctions = require(ROOT.TerrainGenerationModules.FilterFunctions)
 local SedimentLayers = require(ROOT.TerrainGenerationModules.SedimentLayers)
 local WorldData = require(ROOT.DataModules.WorldData)
 local WorldConfig = require(ROOT.DataModules.WorldConfig)
 local TerrainDisplay = require(ROOT.TerrainDisplayModules.TerrainDisplay)
 local Timer = require(ROOT.HelperModules.Timer).new()
 
-local SEDIMENT_DATA = require(ROOT.DataModules.SedimentDataSets.SedimentData1)
+local SEDIMENT_DATA = require(ROOT.DataModules.SedimentData1)
+local sedimentLayers = SedimentLayers.new(SEDIMENT_DATA)
 
-
-
-local loadFunction = ReplicatedStorage.Load
-local saveFunction = ReplicatedStorage.Save
-
-
-local sedimentLayers = SedimentLayers.new()
-sedimentLayers:processData(SEDIMENT_DATA)
 
 
 local seed = 0--math.random(-10000, 10000)
 local terrainGen = TerrainGenerator.new(
 	seed,
-	sedimentLayers.thresholdData,
+	sedimentLayers.tileThresholdData,
 	sedimentLayers.tileData) do
 	
 	local draw = DrawFunctions
+	local filter = FilterFunctions
+
+	local sediments = ImageLayer.new()
+	sediments:draw("MIX", 	1,		draw.noise(.05, .05, 0, 0))
+	sediments:draw("MIX", 	0.5,	draw.noise(.1, .1, 0, 0)) --increasing perlin noise depth, more detailed
+	sediments:draw("MIX", 	0.25,	draw.noise(.2, .2, 0, 0))
+	sediments:draw("MIX", 	0.125,	draw.noise(.4, .4, 0, 0))
+	sediments:draw("MIX", 	0.92,	draw.constant(.5)) --reduce contrast to emphasize gradient overlay, makes more "stepped" sediment
+
+	sediments:draw("OVERLAY",	1,	draw.gradient(0, 0, 0, sedimentLayers.cumulativeDepth))
+	sediments:filter("MIX",		1,	filter.step(sedimentLayers.sedimentThresholdData))
+
+	local commonOreMask = ImageLayer.new()
+	commonOreMask:draw("MIX", 		1,		draw.noise(.3, .3, 100, 0))
+	commonOreMask:draw("MIX", 		0.5,	draw.noise(.6, .6, 100, 0))
+	commonOreMask:draw("MASK",		1,		draw.constant(.6))
 	
-	local sediments = ImageProcessor.new()
-	sediments:blend("MIX", 	1,		draw.noise(.05, .05, 0, 0))
-	sediments:blend("MIX", 	0.5,	draw.noise(.1, .1, 0, 0)) --increasing perlin noise depth, more detailed
-	sediments:blend("MIX", 	0.25,	draw.noise(.2, .2, 0, 0))
-	sediments:blend("MIX", 	0.125,	draw.noise(.4, .4, 0, 0))
-	sediments:blend("MIX", 	0.83,	draw.constant(.5)) --reduce contrast to emphasize gradient overlay, makes more "stepped" sediment
+	local rareOreMask = ImageLayer.new()
+	rareOreMask:draw("MIX", 		1,		draw.noise(.2, .2, 20, 0))
+	rareOreMask:draw("MIX", 		0.5,	draw.noise(.4, .4, 20, 0))
+	rareOreMask:draw("MASK",		1,		draw.constant(.65))
 	
-	--sediments:blend("ADD",	
-	sediments:blend("OVERLAY",		1,	draw.gradient(0, 0, 0, sedimentLayers.cumulativeDepth))
+	local preciousOreMask = ImageLayer.new()
+	preciousOreMask:draw("MIX", 	1,		draw.noise(.15, .15, 50, 0))
+	preciousOreMask:draw("MIX", 	0.5,	draw.noise(.3, .3, 50, 0))
+	preciousOreMask:draw("MASK",	1,		draw.constant(.68))
 	
-	terrainGen:addImageProcessor(sediments)
+	local oreMask = ImageLayer.new()
+	oreMask:mix("ALPHA_MIX",		0.25,	commonOreMask)
+	oreMask:mix("ALPHA_MIX",		0.5,	rareOreMask)
+	oreMask:mix("ALPHA_MIX",		0.75,	preciousOreMask)
 	
+	sediments:mix("ADD",			1/sedimentLayers.layerCount,	oreMask)
+	
+	terrainGen:setSedimentLayer(sediments)
 	--[[
 	local ground = ThresholdDrawer.new({0, 0.25, 0.285, 0.38}, {0, 1, 2, 3})
 	ground:blend("ADD", 	1, 	draw.gradient(0, 0, 0, 40))
 	ground:blend("OVERLAY",	1, 	draw.noise(.055, .055, 0, 0))
 	terrainGen:addDrawer(ground)
 	]]
-	
-	
-	
 end
+
+
+
+local loadFunction = ReplicatedStorage.Load
+local saveFunction = ReplicatedStorage.Save
+
 
 local rootModel = Instance.new("Model")
 rootModel.Parent = workspace

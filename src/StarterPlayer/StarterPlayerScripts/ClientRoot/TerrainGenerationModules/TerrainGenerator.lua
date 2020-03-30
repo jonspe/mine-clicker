@@ -2,6 +2,7 @@
 
 local floor = math.floor
 
+
 local function findThreshold(thresholds, tileIDs, value)
 	local highest = thresholds[1]
 	local index = 1
@@ -16,7 +17,18 @@ local function findThreshold(thresholds, tileIDs, value)
 	
 	return tileIDs[index]
 end
+--[[
 
+local function findThreshold(thresholds, tileIDs, value)
+	print(value)
+	for i = 2, #thresholds do
+		if thresholds[i] > value then
+			return tileIDs[i-1]
+		end
+	end
+	return tileIDs[#tileIDs]
+end
+]]
 --[[
 local function findThreshold(thresholds, tiles, value)
 	local first = 1
@@ -50,29 +62,30 @@ function TerrainGenerator.new(seed, thresholds, tiles)
 		thresholds = thresholds,
 		tiles = tiles,
 		
-		layers = {}
+		surfaceLayer = nil,
+		sedimentLayer = nil,
 	}
 	
 	setmetatable(self, TerrainGenerator)
 	return self
 end
 
-function TerrainGenerator:addImageProcessor(processor)
-	table.insert(self.layers, processor)
+function TerrainGenerator:setSurfaceLayer(layer)
+	self.surfaceLayer = layer
+end
+
+function TerrainGenerator:setSedimentLayer(layer)
+	self.sedimentLayer = layer
 end
 
 function TerrainGenerator:generateTile(x, y)
-	--[[
-	local tile_id = -1
-	for i = 1, #self.layers do
-		local v = self.layers[i]:draw(x, y, self.seed)
-		if v ~= -1 then
-			tile_id = v
-		end
-	end
-	return tile_id
-	]]
-	return findThreshold(self.thresholds, self.tiles, self.layers[1]:draw(x, y, self.seed))
+	--local result = self.surfaceLayer:draw(x, y, self.seed)
+	--if result <= 0 then
+	local result = self.sedimentLayer:get(x, y, self.seed)
+	--end
+	--print(result)
+
+	return findThreshold(self.thresholds, self.tiles, result)
 end
 
 return TerrainGenerator

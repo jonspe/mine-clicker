@@ -8,27 +8,33 @@ end
 local SedimentLayers = {}
 SedimentLayers.__index = SedimentLayers
 
-function SedimentLayers.new()
+function SedimentLayers.new(sedimentDataSource)
 	local self = {
 		metaData = nil,
-		thresholdData = nil,
+		sedimentThresholdData = nil,
+		tileThresholdData = nil,
 		tileData = nil,
 		
+		layerCount = nil,
 		cumulativeDepth = nil,
 	}
 	
 	setmetatable(self, SedimentLayers)
+	self:processData(sedimentDataSource)
+
 	return self
 end
 
 function SedimentLayers:processData(data)
 	self.metaData = {}
-	self.thresholdData = {}
+	self.sedimentThresholdData = {}
+	self.tileThresholdData = {}
 	self.tileData = {}
 	
-	local layerCount = #data
+	self.layerCount = #data
+
 	local cumulativeDepth = 0
-	
+
 	-- first pass, process metadata
 	for index, layerData in ipairs(data) do
 		local depth = layerData[3]
@@ -41,27 +47,36 @@ function SedimentLayers:processData(data)
 			bottom = cumulativeDepth + depth,
 			depth = depth,
 			
-			thresholds = layerData[4],
-			tiles = layerData[5]
+			baseOre = layerData[4],
+			commonOre = layerData[5],
+			rareOre = layerData[6],
+			preciousOre = layerData[7],
 		}
 		
 		cumulativeDepth = cumulativeDepth + depth
 	end
 	
-	-- second pass, to compress threshold value ranges to their own top-bottom
+	-- second pass to compress threshold value ranges to their own top-bottom
 	for _, sedimentLayer in ipairs(self.metaData) do
 		local scale = (sedimentLayer.bottom - sedimentLayer.top)/cumulativeDepth
-		for __, threshold in ipairs(sedimentLayer.thresholds) do
-			table.insert(self.thresholdData, sedimentLayer.top/cumulativeDepth + threshold * scale)
-		end
+		local top = sedimentLayer.top/cumulativeDepth
+
+		-- calculate thresholds (offset from stepped sediments)
+		table.insert(self.tileThresholdData, top)  --base ore
+		table.insert(self.tileThresholdData, top + 0.25 * scale) --common
+		table.insert(self.tileThresholdData, top + 0.5 * scale) --rare
+		table.insert(self.tileThresholdData, top + 0.75 * scale) --precious
 		
-		-- also add tile data
-		for __, tile in ipairs(sedimentLayer.tiles) do
-			table.insert(self.tileData, tile)
-		end
+		-- add tile data
+		table.insert(self.tileData, sedimentLayer.baseOre)
+		table.insert(self.tileData, sedimentLayer.commonOre)
+		table.insert(self.tileData, sedimentLayer.rareOre)
+		table.insert(self.tileData, sedimentLayer.preciousOre)
+		
+		-- add sediment-specific threshold weights
+		table.insert(self.sedimentThresholdData, sedimentLayer.top/cumulativeDepth)
 	end
-	
-	print(unpack(self.thresholdData))
+
 	self.cumulativeDepth = cumulativeDepth
 end
 

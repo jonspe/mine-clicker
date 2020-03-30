@@ -1,3 +1,4 @@
 /design
-/rbxl
+/rbxl/backups
+*.lock
 /.vscode

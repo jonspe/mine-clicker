@@ -16,6 +16,7 @@ local Timer = require(ROOT.HelperModules.Timer).new()
 local SEDIMENT_DATA = require(ROOT.DataModules.SedimentData1)
 local sedimentLayers = SedimentLayers.new(SEDIMENT_DATA)
 
+local Remotes = ReplicatedStorage.Remotes
 
 
 local seed = math.random(-10000, 10000)
@@ -67,8 +68,8 @@ end
 
 
 
-local loadFunction = ReplicatedStorage.Load
-local saveFunction = ReplicatedStorage.Save
+local LoadWorld = Remotes.LoadWorld
+local SaveWorld = Remotes.SaveWorld
 
 
 local rootModel = Instance.new("Model")
@@ -152,7 +153,7 @@ UserInputService.InputBegan:Connect(function(inputObject)
 	if inputObject.KeyCode == Enum.KeyCode.B then
 		
 		local saveString = world:binaryDataToString()
-		local success = saveFunction:InvokeServer(saveString)
+		local success = SaveWorld:InvokeServer(saveString)
 		
 		if success then
 			print("saved")
@@ -162,7 +163,7 @@ UserInputService.InputBegan:Connect(function(inputObject)
 		
 	elseif inputObject.KeyCode == Enum.KeyCode.N then
 		
-		local success, loadString = loadFunction:InvokeServer()
+		local success, loadString = LoadWorld:InvokeServer()
 		if success then
 			terrain:clear()
 			world:loadBinaryData(loadString)

@@ -1,0 +1,21 @@
+{
+    "ClassName": "Folder",
+    "Children": [
+        {
+            "Name": "LoadGame",
+            "ClassName": "RemoteFunction"
+        },
+        {
+            "Name": "SaveGame",
+            "ClassName": "RemoteFunction"
+        },
+        {
+            "Name": "LoadWorld",
+            "ClassName": "RemoteFunction"
+        },
+        {
+            "Name": "SaveWorld",
+            "ClassName": "RemoteFunction"
+        }
+    ]
+}

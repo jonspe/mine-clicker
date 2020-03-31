@@ -15,6 +15,11 @@
         "$path": "src/StarterPlayer/StarterPlayerScripts"
       },
       "$ignoreUnknownInstances": true
+    },
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$ignoreUnknownInstances": true,
+      "$path": "src/ReplicatedStorage"
     }
   }
 }

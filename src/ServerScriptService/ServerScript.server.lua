@@ -1,11 +1,12 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataStoreService = require(script.Parent.DataStoreService)
 
+local Remotes = ReplicatedStorage.Remotes
 
-local loadFunction = ReplicatedStorage.Load
-local saveFunction = ReplicatedStorage.Save
+local LoadWorld = Remotes.LoadWorld
+local SaveWorld = Remotes.SaveWorld
 
-loadFunction.OnServerInvoke = function(player)
+LoadWorld.OnServerInvoke = function(player)
 	local worldStore = DataStoreService:GetDataStore("binary", tostring(player.UserId))
 	
 	local saveString
@@ -21,7 +22,7 @@ loadFunction.OnServerInvoke = function(player)
 	return success, saveString
 end
 
-saveFunction.OnServerInvoke = function(player, saveString)
+SaveWorld.OnServerInvoke = function(player, saveString)
 	local worldStore = DataStoreService:GetDataStore("binary", tostring(player.UserId))
 	local success, err = pcall(function()
 		worldStore:SetAsync("chunk1", saveString)

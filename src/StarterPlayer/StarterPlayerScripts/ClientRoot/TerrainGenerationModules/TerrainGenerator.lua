@@ -1,26 +1,5 @@
 
-
-local floor = math.floor
-
-
 local function findThreshold(thresholds, tileIDs, value)
-	local highest = thresholds[1]
-	local index = 1
-	
-	for i = 2, #thresholds do
-		local t = thresholds[i]
-		if t > highest and t <= value then
-			highest = t
-			index = i
-		end
-	end
-	
-	return tileIDs[index]
-end
---[[
-
-local function findThreshold(thresholds, tileIDs, value)
-	print(value)
 	for i = 2, #thresholds do
 		if thresholds[i] > value then
 			return tileIDs[i-1]
@@ -28,8 +7,9 @@ local function findThreshold(thresholds, tileIDs, value)
 	end
 	return tileIDs[#tileIDs]
 end
-]]
+
 --[[
+local floor = math.floor
 local function findThreshold(thresholds, tiles, value)
 	local first = 1
 	local it = first

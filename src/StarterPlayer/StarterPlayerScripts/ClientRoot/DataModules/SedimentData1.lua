@@ -2,7 +2,7 @@ return {
 	{"Underground", "Getting a little dark in here...", 100,
 		3, 4, 5, 6
 	},
-	{"Underground 2", "Getting a darker...", 100,
+	{"Underground 2", "Getting darker...", 100,
 		7, 8, 9, 10
 	},
 	{"Mystery", "What is this place?", 100,
@@ -11,7 +11,7 @@ return {
 	{"Underground", "Getting a little dark in here...", 100,
 		3, 4, 5, 6
 	},
-	{"Underground 2", "Getting a darker...", 100,
+	{"Underground 2", "Getting darker...", 100,
 		7, 8, 9, 10
 	},
 	{"Mystery", "What is this place?", 100,
@@ -20,7 +20,7 @@ return {
 	{"Underground", "Getting a little dark in here...", 100,
 		3, 4, 5, 6
 	},
-	{"Underground 2", "Getting a darker...", 100,
+	{"Underground 2", "Getting darker...", 100,
 		7, 8, 9, 10
 	},
 	{"Mystery", "What is this place?", 100,
@@ -29,7 +29,7 @@ return {
 	{"Underground", "Getting a little dark in here...", 100,
 		3, 4, 5, 6
 	},
-	{"Underground 2", "Getting a darker...", 100,
+	{"Underground 2", "Getting darker...", 100,
 		7, 8, 9, 10
 	},
 	{"Mystery", "What is this place?", 100,

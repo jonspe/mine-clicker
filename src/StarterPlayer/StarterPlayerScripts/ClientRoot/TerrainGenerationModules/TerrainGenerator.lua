@@ -59,11 +59,10 @@ function TerrainGenerator:setSedimentLayer(layer)
 end
 
 function TerrainGenerator:generateTile(x, y)
-	--local result = self.surfaceLayer:draw(x, y, self.seed)
+	--local result = self.surfaceLayer:get(x, y, self.seed)
 	--if result <= 0 then
-	local result = self.sedimentLayer:get(x, y, self.seed)
+		local result = self.sedimentLayer:get(x, y, self.seed)
 	--end
-	--print(result)
 
 	return findThreshold(self.thresholds, self.tiles, result)
 end

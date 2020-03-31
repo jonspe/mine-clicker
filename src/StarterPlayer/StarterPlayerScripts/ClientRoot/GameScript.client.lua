@@ -27,45 +27,47 @@ local terrainGen = TerrainGenerator.new(
 	local draw = DrawFunctions
 	local filter = FilterFunctions
 
-	local sediments = ImageLayer.new()
-	sediments:draw("MIX", 	1,		draw.noise(.05, .05, 0, 0))
-	sediments:draw("MIX", 	0.5,	draw.noise(.1, .1, 0, 0)) --increasing perlin noise depth, more detailed
-	sediments:draw("MIX", 	0.25,	draw.noise(.2, .2, 0, 0))
-	sediments:draw("MIX", 	0.125,	draw.noise(.4, .4, 0, 0))
-	sediments:draw("MIX", 	0.92,	draw.constant(.5)) --reduce contrast to emphasize gradient overlay, makes more "stepped" sediment
 
-	sediments:draw("OVERLAY",	1,	draw.gradient(0, 0, 0, sedimentLayers.cumulativeDepth))
-	sediments:filter("MIX",		1,	filter.step(sedimentLayers.sedimentThresholdData))
+	local sediments = ImageLayer.new() do -- ore gen is SLOW and a BOTTLENECK
+		sediments:draw("MIX", 	1,		draw.noise(.05, .05, 0, 0))
+		sediments:draw("MIX", 	0.5,	draw.noise(.1, .1, 0, 0)) --increasing perlin noise depth, more detailed
+		sediments:draw("MIX", 	0.25,	draw.noise(.2, .2, 0, 0))
+		sediments:draw("MIX", 	0.125,	draw.noise(.4, .4, 0, 0))
+		sediments:draw("MIX", 	0.92,	draw.constant(.5)) --reduce contrast to emphasize gradient overlay, makes more "stepped" sediment
 
-	local commonOreMask = ImageLayer.new()
-	commonOreMask:draw("MIX", 		1,		draw.noise(.3, .3, 100, 0))
-	commonOreMask:draw("MIX", 		0.5,	draw.noise(.6, .6, 100, 0))
-	commonOreMask:draw("MASK",		1,		draw.constant(.6))
-	
-	local rareOreMask = ImageLayer.new()
-	rareOreMask:draw("MIX", 		1,		draw.noise(.2, .2, 20, 0))
-	rareOreMask:draw("MIX", 		0.5,	draw.noise(.4, .4, 20, 0))
-	rareOreMask:draw("MASK",		1,		draw.constant(.65))
-	
-	local preciousOreMask = ImageLayer.new()
-	preciousOreMask:draw("MIX", 	1,		draw.noise(.15, .15, 50, 0))
-	preciousOreMask:draw("MIX", 	0.5,	draw.noise(.3, .3, 50, 0))
-	preciousOreMask:draw("MASK",	1,		draw.constant(.68))
-	
-	local oreMask = ImageLayer.new()
-	oreMask:mix("ALPHA_MIX",		0.25,	commonOreMask)
-	oreMask:mix("ALPHA_MIX",		0.5,	rareOreMask)
-	oreMask:mix("ALPHA_MIX",		0.75,	preciousOreMask)
-	
-	sediments:mix("ADD",			1/sedimentLayers.layerCount,	oreMask)
-	
+		sediments:draw("OVERLAY",	1,	draw.gradient(0, 0, 0, sedimentLayers.cumulativeDepth))
+		sediments:filter("MIX",		1,	filter.step(sedimentLayers.sedimentThresholdData))
+
+		local commonOreMask = ImageLayer.new()
+		commonOreMask:draw("MIX", 		1,		draw.noise(.3, .3, 100, 0))
+		commonOreMask:draw("MIX", 		0.5,	draw.noise(.6, .6, 100, 0))
+		commonOreMask:draw("MASK",		1,		draw.constant(.6))
+		
+		local rareOreMask = ImageLayer.new()
+		rareOreMask:draw("MIX", 		1,		draw.noise(.2, .2, 20, 0))
+		rareOreMask:draw("MIX", 		0.5,	draw.noise(.4, .4, 20, 0))
+		rareOreMask:draw("MASK",		1,		draw.constant(.65))
+		
+		local preciousOreMask = ImageLayer.new()
+		preciousOreMask:draw("MIX", 	1,		draw.noise(.15, .15, 50, 0))
+		preciousOreMask:draw("MIX", 	0.5,	draw.noise(.3, .3, 50, 0))
+		preciousOreMask:draw("MASK",	1,		draw.constant(.68))
+		
+		local oreMask = ImageLayer.new()
+		oreMask:mix("ALPHA_MIX",		0.25,	commonOreMask)
+		oreMask:mix("ALPHA_MIX",		0.5,	rareOreMask)
+		oreMask:mix("ALPHA_MIX",		0.75,	preciousOreMask)
+		
+		sediments:mix("ADD",			1/sedimentLayers.layerCount,	oreMask)
+	end
+
+	local ground = ImageLayer.new() do
+		ground:draw("MIX", 	1, 	draw.gradient(0, 0, 0, 40))
+		ground:draw("OVERLAY",	1, 	draw.noise(.055, .055, 0, 0))
+	end
+
+	terrainGen:setSurfaceLayer(ground)
 	terrainGen:setSedimentLayer(sediments)
-	--[[
-	local ground = ThresholdDrawer.new({0, 0.25, 0.285, 0.38}, {0, 1, 2, 3})
-	ground:blend("ADD", 	1, 	draw.gradient(0, 0, 0, 40))
-	ground:blend("OVERLAY",	1, 	draw.noise(.055, .055, 0, 0))
-	terrainGen:addDrawer(ground)
-	]]
 end
 
 

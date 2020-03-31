@@ -18,7 +18,7 @@ local sedimentLayers = SedimentLayers.new(SEDIMENT_DATA)
 
 
 
-local seed = 0--math.random(-10000, 10000)
+local seed = math.random(-10000, 10000)
 local terrainGen = TerrainGenerator.new(
 	seed,
 	sedimentLayers.tileThresholdData,
@@ -113,9 +113,7 @@ local function mineBlock()
 	local hit, contact = planeIntersection(ray, terrain.transform * CFrame.new(0, 0, WorldConfig.TILE_SIZE/2))
 	if hit then
 		local x, y = terrain:worldToTile(contact)
-		--print(x, y)
 		world:setBinary(x, y, 1)
-		--world:setTile(x, y, 3)
 	end
 end
 
@@ -138,8 +136,7 @@ local lastPos = Vector3.new()
 
 game.Players.LocalPlayer.CharacterAdded:Connect(function()
 	local hrp = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-	local torch_emitter = game.ReplicatedStorage.Lights.TorchEmitter
-	torch_emitter.Light:Clone().Parent = hrp
+	
 	while true do
 		wait(.1)
 		local pos = hrp.Position
@@ -152,18 +149,9 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function()
 			end
 		end
 		
-		if (lastPos - pos).magnitude > 15 then
-			lastPos = pos
-			local t = torch_emitter:Clone()
-			t.CFrame = CFrame.new(pos)
-			t.Parent = workspace
-		end
 		print(string.format("%s, %s", x, y))
 	end
 end)
-
-
-
 
 UserInputService.InputBegan:Connect(function(inputObject)
 	if inputObject.KeyCode == Enum.KeyCode.B then
@@ -189,15 +177,3 @@ UserInputService.InputBegan:Connect(function(inputObject)
 		end
 	end
 end)
-
-local sky_emitter = game.ReplicatedStorage.Lights.SkyEmitter
-local torch_emitter = game.ReplicatedStorage.Lights.TorchEmitter
-
-local width = WorldConfig.MAP_X * WorldConfig.TILE_SIZE
-sky_emitter.CFrame = terrain.transform * CFrame.new(width/2, -12, 8)
-sky_emitter.Size = Vector3.new(width, 4, 24)
-sky_emitter.Parent = workspace
-
---game.Lighting.OutdoorAmbient = Color3.new(0, 0, 0)
---game.Lighting.Brightness = 0
-

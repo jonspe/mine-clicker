@@ -1,5 +1,6 @@
 /design
 /rbxl/backups
 /rbxl/rojo_export_rbxlx
+*.rbxlx
 *.lock
 /.vscode

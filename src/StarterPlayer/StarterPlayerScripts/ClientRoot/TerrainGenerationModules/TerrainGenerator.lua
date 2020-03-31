@@ -36,35 +36,47 @@ end
 local TerrainGenerator = {}
 TerrainGenerator.__index = TerrainGenerator
 
-function TerrainGenerator.new(seed, thresholds, tiles)
+function TerrainGenerator.new(seed)
 	local self = {
 		seed = seed,
 		thresholds = thresholds,
 		tiles = tiles,
 		
-		surfaceLayer = nil,
-		sedimentLayer = nil,
+		surfaceImage = nil,
+		surfaceThresholds = nil,
+		surfaceTiles = nil,
+
+		sedimentImage = nil,
+		sedimentThresholds = nil,
+		sedimentTiles = nil,
 	}
 	
 	setmetatable(self, TerrainGenerator)
 	return self
 end
 
-function TerrainGenerator:setSurfaceLayer(layer)
-	self.surfaceLayer = layer
+function TerrainGenerator:setSurface(image, thresholds, tiles)
+	self.surfaceImage = image
+	self.surfaceThresholds = thresholds
+	self.surfaceTiles = tiles
 end
 
-function TerrainGenerator:setSedimentLayer(layer)
-	self.sedimentLayer = layer
+function TerrainGenerator:setSediments(image, thresholds, tiles)
+	self.sedimentImage = image
+	self.sedimentThresholds = thresholds
+	self.sedimentTiles = tiles
 end
 
 function TerrainGenerator:generateTile(x, y)
-	--local result = self.surfaceLayer:get(x, y, self.seed)
-	--if result <= 0 then
-		local result = self.sedimentLayer:get(x, y, self.seed)
-	--end
+	local surfaceValue = self.surfaceImage:get(x, y, self.seed)
+	local tile = findThreshold(self.surfaceThresholds, self.surfaceTiles, surfaceValue)
 
-	return findThreshold(self.thresholds, self.tiles, result)
+	if tile == -1 then
+		local sedimentValue = self.sedimentImage:get(x, y, self.seed)
+		tile = findThreshold(self.sedimentThresholds, self.sedimentTiles, sedimentValue)
+	end
+	
+	return tile
 end
 
 return TerrainGenerator

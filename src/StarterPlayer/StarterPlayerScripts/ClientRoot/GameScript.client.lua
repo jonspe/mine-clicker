@@ -19,14 +19,9 @@ local sedimentLayers = SedimentLayers.new(SEDIMENT_DATA)
 
 
 local seed = math.random(-10000, 10000)
-local terrainGen = TerrainGenerator.new(
-	seed,
-	sedimentLayers.tileThresholdData,
-	sedimentLayers.tileData) do
-	
+local terrainGen = TerrainGenerator.new(seed) do
 	local draw = DrawFunctions
 	local filter = FilterFunctions
-
 
 	local sediments = ImageLayer.new() do -- ore gen is SLOW and a BOTTLENECK
 		sediments:draw("MIX", 	1,		draw.noise(.05, .05, 0, 0))
@@ -46,12 +41,12 @@ local terrainGen = TerrainGenerator.new(
 		local rareOreMask = ImageLayer.new()
 		rareOreMask:draw("MIX", 		1,		draw.noise(.2, .2, 20, 0))
 		rareOreMask:draw("MIX", 		0.5,	draw.noise(.4, .4, 20, 0))
-		rareOreMask:draw("MASK",		1,		draw.constant(.65))
+		rareOreMask:draw("MASK",		1,		draw.constant(.675))
 		
 		local preciousOreMask = ImageLayer.new()
 		preciousOreMask:draw("MIX", 	1,		draw.noise(.15, .15, 50, 0))
 		preciousOreMask:draw("MIX", 	0.5,	draw.noise(.3, .3, 50, 0))
-		preciousOreMask:draw("MASK",	1,		draw.constant(.68))
+		preciousOreMask:draw("MASK",	1,		draw.constant(.69))
 		
 		local oreMask = ImageLayer.new()
 		oreMask:mix("ALPHA_MIX",		0.25,	commonOreMask)
@@ -62,12 +57,12 @@ local terrainGen = TerrainGenerator.new(
 	end
 
 	local ground = ImageLayer.new() do
-		ground:draw("MIX", 	1, 	draw.gradient(0, 0, 0, 40))
-		ground:draw("OVERLAY",	1, 	draw.noise(.055, .055, 0, 0))
+		ground:draw("MIX", 	1, 	draw.gradient(0, 0, 0, 15))
+		ground:draw("OVERLAY",	1, 	draw.noise(.07, .07, 0, 0))
 	end
 
-	terrainGen:setSurfaceLayer(ground)
-	terrainGen:setSedimentLayer(sediments)
+	terrainGen:setSurface(ground, {0, 0.3, 0.4, 0.6}, {0, 1, 2, -1})
+	terrainGen:setSediments(sediments, sedimentLayers.tileThresholdData, sedimentLayers.tileData)
 end
 
 

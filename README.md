@@ -1,3 +1,4 @@
-MineClicker
-=========
+# MineClicker
 This is the repository for an upcoming idle game on ROBLOX. Name is subject to change.
+
+**Trello:** https://trello.com/b/sPozZOhK/mine-clicker

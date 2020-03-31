@@ -86,19 +86,6 @@ local terrain = TerrainDisplay.new(
 	CFrame.new(-WorldConfig.CHUNK_COL*WorldConfig.CHUNK_DIM*WorldConfig.TILE_SIZE/2, 50, 0))
 
 
---[[
-Timer:tick("gen")
-for y = 0, 31 do
-	for x = 0, 15 do
-		terrain:drawChunk(x, y)
-	end
-end
-Timer:tock()
-]]
-
-
-
-
 
 local abs = math.abs
 local function planeIntersection(ray, planeTransform)
@@ -213,38 +200,4 @@ sky_emitter.Parent = workspace
 
 --game.Lighting.OutdoorAmbient = Color3.new(0, 0, 0)
 --game.Lighting.Brightness = 0
-
-
-
-
---[[ DATA STORE DEMO
-	
-world:initZeroBinaryData()
-local save_string = world:binaryDataToString()
-local world_store = DataStoreService:GetDataStore("world_data", tostring(35434))
-
-Timer:tick()
-world_store:SetAsync("binary", save_string)
-Timer:tock()
-
-Timer:tick()
-local retrieved_data
-local success, err = pcall(function()
-	retrieved_data = world_store:GetAsync("binary")
-end)
-Timer:tock()
-if success then
-	print("success")
-	
-	Timer:tick()
-	world:loadBinaryData(retrieved_data)
-	Timer:tock()
-	
-	local same_string = world:binaryDataToString()
-	print(#save_string)
-	print(#same_string)
-	print(same_string == save_string)
-end
-
-]]
 

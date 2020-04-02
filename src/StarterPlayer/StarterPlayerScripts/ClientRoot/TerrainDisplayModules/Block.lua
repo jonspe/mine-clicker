@@ -46,8 +46,12 @@ function Block:draw()
 		
 		local part = id[self.tileId]:Clone()
 		part.Size = TILE_SIZE * Vector3.new(width, height, 1)
-		part.Back.Color3 = Color3.new(1-self.binary*.3, 1-self.binary*.3, 1-self.binary*.3)
-		part.CFrame = self.transform * CFrame.new(TILE_SIZE * Vector3.new(self.left + width/2, -(self.top + height/2), -self.binary))
+		part.Texture.Color3 = Color3.new(1-self.binary*.3, 1-self.binary*.3, 1-self.binary*.3)
+		part.Texture.OffsetStudsU = TILE_SIZE/2 * (width % 2)
+		part.Texture.OffsetStudsV = TILE_SIZE/2 * (height % 2)
+		part.CFrame = self.transform
+						* CFrame.new(TILE_SIZE * Vector3.new(self.left + width/2, -(self.top + height/2), -self.binary))
+						* CFrame.Angles(0, math.pi, 0)
 		part.Parent = self.rootModel
 		
 		self.part = part

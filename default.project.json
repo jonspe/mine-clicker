@@ -19,7 +19,21 @@
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
       "$ignoreUnknownInstances": true,
-      "$path": "src/ReplicatedStorage"
+      "Vendor": {
+        "$className": "Folder",
+        "Roact": {
+          "$path": "src/ReplicatedStorage/vendor/roact/src"
+        },
+        "RoactRodux": {
+          "$path": "src/ReplicatedStorage/vendor/roact-rodux/src"
+        },
+        "Rodux": {
+          "$path": "src/ReplicatedStorage/vendor/rodux/src"
+        },
+        "MockDataStoreService": {
+          "$path": "src/ReplicatedStorage/vendor/MockDataStoreService/lib"
+        }
+      }
     }
   }
 }

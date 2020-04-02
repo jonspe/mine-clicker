@@ -1,0 +1,12 @@
+[submodule "src/ReplicatedStorage/vendor/roact"]
+	path = src/ReplicatedStorage/vendor/roact
+	url = git@github.com:Roblox/roact.git
+[submodule "src/ReplicatedStorage/vendor/rodux"]
+	path = src/ReplicatedStorage/vendor/rodux
+	url = git@github.com:Roblox/rodux.git
+[submodule "src/ReplicatedStorage/vendor/roact-rodux"]
+	path = src/ReplicatedStorage/vendor/roact-rodux
+	url = git@github.com:Roblox/roact-rodux.git
+[submodule "src/ReplicatedStorage/vendor/MockDataStoreService"]
+	path = src/ReplicatedStorage/vendor/MockDataStoreService
+	url = git@github.com:buildthomas/MockDataStoreService.git

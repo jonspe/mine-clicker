@@ -1,13 +1,14 @@
 local ROOT = script.Parent.Parent
 
 local WorldData = require(ROOT.DataModules.WorldData)
-local WorldConfig = require(ROOT.DataModules.WorldConfig)
+local Chunk = require(ROOT.DataModules.Chunk)
 local TerrainChunk = require(ROOT.TerrainDisplayModules.TerrainChunk)
 
-local TILE_SIZE = WorldConfig.TILE_SIZE
-local CHUNK_DIM = WorldConfig.CHUNK_DIM
-
 local floor = math.floor
+
+
+local TILE_SIZE = WorldData.TILE_SIZE
+local CHUNK_DIM = WorldData.CHUNK_DIM
 
 local TerrainDisplay = {}
 local TerrainDisplay_mt = { __index = TerrainDisplay }
@@ -22,13 +23,12 @@ local TerrainDisplay_mt = { __index = TerrainDisplay }
 	@returns [t:TerrainDisplay]
 **--]]
 function TerrainDisplay.new(worldData, rootModel, transform)
-	local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = transform:GetComponents()
 	local self = {
 		worldData = worldData,
 		rootModel = rootModel,
 		transform = transform,
 		invTransform = transform:inverse(),
-		terrainChunks = {},
+		terrainChunks = Chunk.new(WorldData.CHUNK_COL, WorldData.CHUNK_ROW),
 		
 		_binaryChangedConnection = nil,
 		_tileChangedConnection = nil,
@@ -46,16 +46,16 @@ function TerrainDisplay:initConnections()
 		self:updateTile(x, y)
 	end
 	
-	self._binaryChangedConnection = self.worldData.binaryChanged:Connect(update)
+	self._presenceChangedConnection = self.worldData.presenceChanged:Connect(update)
 	self._tileChangedConnection = self.worldData.tileChanged:Connect(update)
 end
 
 
 function TerrainDisplay:clear()
-	for _, chunk in pairs(self.terrainChunks) do
+	for _, _, chunk in self.terrainChunks:horizontalIterator() do
 		chunk.model:Destroy()
 	end
-	self.terrainChunks = {}
+	--self.terrainChunks = {}
 end
 
 --[[**
@@ -78,7 +78,8 @@ end
 	@returns [t:Vector3] worldPosition
 **--]]
 function TerrainDisplay:tileToWorld(tileX, tileY)
-	local worldPos = self.transform * Vector3.new(TILE_SIZE * tileX, TILE_SIZE * tileY, 0)
+	local worldPos = self.transform
+			* Vector3.new(TILE_SIZE * tileX, TILE_SIZE * tileY, 0)
 	return worldPos
 end
 
@@ -90,28 +91,27 @@ end
 	@returns
 **--]]
 function TerrainDisplay:drawChunk(chunkX, chunkY)
-	if chunkX < 0 or chunkX > WorldConfig.CHUNK_COL-1 or chunkY < 0 then
+	if chunkX < 0 or chunkX > WorldData.CHUNK_COL-1 or chunkY < 0 then
 		return
 	end
 	
 	self.worldData:loadChunk(chunkX, chunkY)
-	local chunkIndex = WorldConfig.chunkXYtoIndex(chunkX, chunkY)
 	
-	local chunk = self.terrainChunks[chunkIndex]
-	if chunk == nil then
-		chunk = TerrainChunk.new(
-			chunkIndex,
-			self.worldData,
+	local terrainChunk = self.terrainChunks:get(chunkX, chunkY)
+	if terrainChunk == nil then
+		terrainChunk = TerrainChunk.new(
+			self.worldData.tileChunks:get(chunkX, chunkY),
+			self.worldData.binaryChunks:get(chunkX, chunkY),
 			self.transform * CFrame.new(
 				CHUNK_DIM * TILE_SIZE * chunkX,
 				-CHUNK_DIM * TILE_SIZE * chunkY,
 				0),
 			self.rootModel)
 		
-		self.terrainChunks[chunkIndex] = chunk
+		self.terrainChunks:set(chunkX, chunkY, terrainChunk)
 	end
 	
-	chunk:draw()
+	terrainChunk:draw()
 end
 
 --[[**
@@ -122,9 +122,7 @@ end
 	@returns
 **--]]
 function TerrainDisplay:hideChunk(chunkX, chunkY)
-	local chunkIndex = WorldConfig.chunkXYtoIndex(chunkX, chunkY)
-	local chunk = self.terrainChunks[chunkIndex]
-	
+	local chunk = self.terrainChunks:get(chunkX, chunkY)
 	if chunk ~= nil then
 		chunk:hide()
 	end
@@ -138,11 +136,11 @@ end
 	@returns
 **--]]
 function TerrainDisplay:updateTile(tileX, tileY)
-	local chunkIndex = WorldConfig.tileXYtoChunkIndex(tileX, tileY)
+	local chunkX, chunkY = WorldData.tileToChunkCoordinates(tileX, tileY)
+	local chunk = self.terrainChunks:get(chunkX, chunkY)
 	
-	local chunk = self.terrainChunks[chunkIndex]
 	if chunk ~= nil then
-		chunk:updateTile(tileX % CHUNK_DIM, tileY % CHUNK_DIM)
+		chunk:updateTile(WorldData.wrapTileCoordinates(tileX, tileY))
 	end
 end
 

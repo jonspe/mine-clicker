@@ -20,21 +20,21 @@ function BinaryChunk.new(width, height, data)
 end
 
 function BinaryChunk:get(x, y)
-    local index = y*self.widthInt + math.floor(x/INT_BITS)
+    local index = y*self.widthInt + math.floor(x/INT_BITS) + 1
     local value = self.data[index]
     
-    return bit32.extract(value, x % INT_BITS)
+    return value and bit32.extract(value, x % INT_BITS) == 0 or nil
 end
 
 function BinaryChunk:getInt(x, y)
-    local index = y*self.widthInt + math.floor(x/INT_BITS)
+    local index = y*self.widthInt + math.floor(x/INT_BITS) + 1
     return self.data[index]
 end
 
-function BinaryChunk:set(x, y, bit)
-    local index = y*self.widthInt + math.floor(x/INT_BITS)
+function BinaryChunk:set(x, y, presence)
+    local index = y*self.widthInt + math.floor(x/INT_BITS) + 1
     local value = self.data[index]
-
+    local bit = presence and 0 or 1
     self.data[index] = bit32.replace(value, bit, x % INT_BITS)
 end
 

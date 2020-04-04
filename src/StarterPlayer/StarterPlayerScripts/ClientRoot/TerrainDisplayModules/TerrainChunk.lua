@@ -1,25 +1,19 @@
 local ROOT = script.Parent.Parent
 
 local WorldData = require(ROOT.DataModules.WorldData)
-local WorldConfig = require(ROOT.DataModules.WorldConfig)
+local Chunk = require(ROOT.DataModules.Chunk)
 local Block = require(ROOT.TerrainDisplayModules.Block)
 
-local CHUNK_TILES = WorldConfig.CHUNK_TILES
-local CHUNK_DIM = WorldConfig.CHUNK_DIM
+local CHUNK_TILES = WorldData.CHUNK_TILES
+local CHUNK_DIM = WorldData.CHUNK_DIM
 
 local TerrainChunk = {}
 TerrainChunk.__index = TerrainChunk
 
-function TerrainChunk.new(index, worldData, transform, rootModel)
-	local x, y = WorldConfig.chunkIndexToXY(index)
+function TerrainChunk.new(tileChunk, binaryChunk, transform, rootModel)
 	local self = {
-		index = index,
-		x = x,
-		y = y,
-		
-		worldData = worldData,
-		tileData = worldData.chunkTileData[index],
-		binaryData = worldData.chunkBinaryData[index],
+		tileChunk = tileChunk,
+		binaryChunk = binaryChunk,
 		
 		model = Instance.new("Model"),
 		rootModel = rootModel,
@@ -36,36 +30,34 @@ end
 
 function TerrainChunk:calculateChunkBlocks()
 	local blocks = {}
-	local visited = {}
+	local visited = Chunk.new(CHUNK_DIM, CHUNK_DIM, false)
 	local block
 	
-	for index = 1, CHUNK_TILES do
-		if not visited[index] then
-			local x, y = WorldConfig.tileIndexToXY(index)
-			
-			local id = self.tileData[index]
-			local bit = bit32.extract(self.binaryData[y+1], x)
+	for x, y in self.tileChunk:horizontalIterator() do
+		if not visited:get(x, y) then --hmm
+			local id = self.tileChunk:get(x, y)
+			local presence = self.binaryChunk:get(x, y)
 			
 			block = Block.new(
 				self.model, self.transform,
-				id, bit, x, x, y, y)
+				id, presence, x, x, y, y)
 			
 			local found_y = false
 			
 			for xx = x, CHUNK_DIM-1 do
-				local index2 = WorldConfig.tileXYtoIndex(xx, y)
-				if visited[index2] or self.tileData[index2] ~= id or bit32.extract(self.binaryData[y+1], xx) ~= bit then
+				if visited:get(xx, y) or self.tileChunk:get(xx, y) ~= id
+						or self.binaryChunk:get(xx, y) ~= presence then
 					break
 				end
 				block.right = xx
-				visited[index2] = true
+				visited:set(xx, y, true)
 			end
 			
 			
 			for yy = y+1, CHUNK_DIM-1 do
 				for xx = x, block.right do
-					local index2 = WorldConfig.tileXYtoIndex(xx, yy)
-					if visited[index2] or self.tileData[index2] ~= id or bit32.extract(self.binaryData[yy+1], xx) ~= bit then
+					if visited:get(xx, yy) or self.tileChunk:get(xx, yy) ~= id
+							or self.binaryChunk:get(xx, yy) ~= presence then
 						block.bottom = yy-1
 						found_y = true
 						break
@@ -74,8 +66,7 @@ function TerrainChunk:calculateChunkBlocks()
 				end
 				if found_y then break end
 				for xx = x, block.right do
-					local index2 = WorldConfig.tileXYtoIndex(xx, yy)
-					visited[index2] = true
+					visited:set(xx, yy, true)
 				end
 				block.bottom = yy
 			end
@@ -90,7 +81,7 @@ end
 
 function TerrainChunk:draw()
 	if not self.isDrawn then
-		local tileSize = WorldConfig.TILE_SIZE
+		local tileSize = WorldData.TILE_SIZE
 		
 		local blocks = self:calculateChunkBlocks()
 		self.blocks = blocks
@@ -123,12 +114,9 @@ end
 
 
 function TerrainChunk:updateTile(tileX, tileY)
-	local tileIndex = WorldConfig.tileXYtoIndex(tileX, tileY)
-	local bx, by = WorldConfig.tileXYtoBinaryXY(tileX, tileY)
-	
-	local tileId = self.tileData[tileIndex]
-	local binary = bit32.extract(self.binaryData[by], bx)
-	
+	local tileId = self.tileChunk:get(tileX, tileY)
+	local presence = self.binaryChunk:get(tileX, tileY)
+
 	local index, block = self:searchForBlock(tileX, tileY)
 	local resultBlocks = block:poke(tileX, tileY, tileId, binary)
 	

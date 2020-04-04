@@ -9,7 +9,6 @@ local DrawFunctions = require(ROOT.TerrainGenerationModules.DrawFunctions)
 local FilterFunctions = require(ROOT.TerrainGenerationModules.FilterFunctions)
 local SedimentLayers = require(ROOT.TerrainGenerationModules.SedimentLayers)
 local WorldData = require(ROOT.DataModules.WorldData)
-local WorldConfig = require(ROOT.DataModules.WorldConfig)
 local TerrainDisplay = require(ROOT.TerrainDisplayModules.TerrainDisplay)
 local Timer = require(ROOT.HelperModules.Timer).new()
 
@@ -76,10 +75,8 @@ local rootModel = Instance.new("Model")
 rootModel.Parent = workspace
 
 local world = WorldData.new(terrainGen)
-local terrain = TerrainDisplay.new(
-	world,
-	rootModel,
-	CFrame.new(-WorldConfig.CHUNK_COL*WorldConfig.CHUNK_DIM*WorldConfig.TILE_SIZE/2, 50, 0))
+local terrain = TerrainDisplay.new(world, rootModel, CFrame.new(
+		-WorldData.CHUNK_COL*WorldData.CHUNK_DIM*WorldData.TILE_SIZE/2, 50, 0))
 
 
 
@@ -106,10 +103,10 @@ end
 local mouse = game.Players.LocalPlayer:GetMouse()
 local function mineBlock()
 	local ray = mouse.UnitRay
-	local hit, contact = planeIntersection(ray, terrain.transform * CFrame.new(0, 0, WorldConfig.TILE_SIZE/2))
+	local hit, contact = planeIntersection(ray, terrain.transform * CFrame.new(0, 0, WorldData.TILE_SIZE/2))
 	if hit then
 		local x, y = terrain:worldToTile(contact)
-		world:setBinary(x, y, 1)
+		world:setPresence(x, y, false)
 	end
 end
 
@@ -137,7 +134,7 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function()
 		wait(.1)
 		local pos = hrp.Position
 		local x, y = terrain:worldToTile(pos)
-		local cx, cy = WorldConfig.tileXYtoChunkXY(x, y)
+		local cx, cy = WorldData.tileToChunkCoordinates(x, y)
 		
 		for xx = -1, 1 do
 			for yy = -1, 1 do
@@ -145,7 +142,7 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function()
 			end
 		end
 		
-		print(string.format("%s, %s", x, y))
+		--print(string.format("%s, %s", x, y))
 	end
 end)
 

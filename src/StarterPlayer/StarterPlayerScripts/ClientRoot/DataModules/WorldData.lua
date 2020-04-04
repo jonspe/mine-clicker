@@ -1,25 +1,10 @@
 local HttpService = game:GetService("HttpService")
 
-
 local ROOT = script.Parent.Parent
-
+local Chunk = require(ROOT.DataModules.Chunk)
+local BinaryChunk = require(ROOT.DataModules.BinaryChunk)
 local Signal = require(ROOT.HelperModules.Signal)
 local Timer = require(ROOT.HelperModules.Timer).new()
-local WorldConfig = require(ROOT.DataModules.WorldConfig)
-
-
--- For efficiency's sake
-local BITS = WorldConfig.BITS
-local MAX_UINT = WorldConfig.MAX_UINT
-
-local MAP_X = WorldConfig.MAP_X
-local MAP_Y = WorldConfig.MAP_Y
-
-local CHUNK_COL = WorldConfig.CHUNK_COL
-local CHUNK_ROW = WorldConfig.CHUNK_ROW
-local CHUNK_DIM = WorldConfig.CHUNK_DIM
-local CHUNK_TILES = WorldConfig.CHUNK_TILES
-local CHUNK_COUNT = WorldConfig.CHUNK_COUNT
 
 local bor = bit32.bor
 local lshift = bit32.lshift
@@ -30,12 +15,16 @@ local char = string.char
 local floor = math.floor
 local format = string.format
 
--- Converts 4 character bytes to integer by chaining them together
+--[[**
+	Converts 4 character bytes to integer by chaining them together
+**--]]
 local function charsToInt(bt0, bt1, bt2, bt3)
 	return bor(lshift(bt0, 21), lshift(bt1, 14), lshift(bt2, 7), bt3)
 end
 
--- Converts integer to string of character from the integer's four 8 bit segments
+--[[**
+	Converts integer to string of character from the integer's four 8 bit segments
+**--]]
 local function intToChars(int)
 	return char(
 		extract(int, 21, 7),
@@ -44,22 +33,47 @@ local function intToChars(int)
 		extract(int, 0, 7))
 end
 
--- Iterates through a long string and gives integers formed from each set of 4 chars
--- If input is not divisible by 4, ignores the remainder
--- Returns intCounter (starts from 0), integerData
-local function string_int_iter(data)
+--[[**
+	Iterates through a long string and gives integers formed from each set of 4 chars
+	If input is not divisible by 4, ignores the remainder
+	Returns intIndex (starts from 0), integerData
+**--]]
+local function stringIntIter(data)
 	local size = string.len(data)
-	local intCounter = -1
+	local intIndex = -1
 	
 	return function()
-		intCounter = intCounter + 1
-		local ch = 4*intCounter + 1
+		intIndex = intIndex + 1
+		local ch = 4*intIndex + 1
 		
 		if ch+3 <= size then
-			return intCounter, charsToInt(byte(data, ch, ch+3))
+			return intIndex, charsToInt(byte(data, ch, ch+3))
 		end
 	end
 end
+
+
+--[[**
+	Chunk size is restricted by data store string storage
+	Datastore only accepts UTF-8, which means ASCII characters ranging
+	from \0 to \127. Therefore each char can store 7 bits instead of 8.
+**--]]
+
+local BITS = 7
+local INT_BITS = 4*BITS
+local MAX_UINT = 2^28 - 1
+
+local CHUNK_DIM = INT_BITS
+local CHUNK_ROW = 64
+local CHUNK_COL = 8
+local CHUNK_COUNT = CHUNK_ROW * CHUNK_COL
+local CHUNK_TILES = CHUNK_DIM * CHUNK_DIM
+
+local MAP_X = CHUNK_DIM * CHUNK_COL
+local MAP_Y = CHUNK_DIM * CHUNK_ROW
+
+local TILE_SIZE = 4
+
 
 local function inBounds(x, y)
 	if x < 0 or y < 0 or x >= MAP_X or y >= MAP_Y then
@@ -68,140 +82,125 @@ local function inBounds(x, y)
 	return true
 end
 
+local function tileToChunkCoordinates(x, y)
+	return
+		math.floor(x/CHUNK_DIM),
+		math.floor(y/CHUNK_DIM)
+end
+
+local function wrapTileCoordinates(x, y)
+	return
+		x % CHUNK_DIM,
+		y % CHUNK_DIM
+end
 
 
+local WorldData = {
+	BITS = BITS,
+	INT_BITS = INT_BITS,
+	MAX_UINT = MAX_UINT,
 
-local WorldData = {}
+	CHUNK_DIM = CHUNK_DIM,
+	CHUNK_ROW = CHUNK_ROW,
+	CHUNK_COL = CHUNK_COL,
+	CHUNK_COUNT = CHUNK_COUNT,
+	CHUNK_TILES = CHUNK_TILES,
+
+	MAP_X = MAP_X,
+	MAP_Y = MAP_Y,
+
+	TILE_SIZE = TILE_SIZE,
+
+	tileToChunkCoordinates = tileToChunkCoordinates,
+	wrapTileCoordinates = wrapTileCoordinates,
+}
+
 WorldData.__index = WorldData
 
-WorldData.new = function(terrainGen)
+function WorldData.new(terrainGenerator)
 	local self = {
-		chunkTileData = {}, --1024 integers for tileids each chunk
-		chunkBinaryData = {}, --32 of 32-bit integers in each chunk
-		terrainGen = terrainGen,
-		
-		binaryChangedSignal = Signal(),  --for terraindisplay update terrain
-		tileChangedSignal = Signal(), --for terraindisplay update terrain
+		terrainGenerator = terrainGenerator,
+
+		tileChunks = Chunk.new(CHUNK_COL, CHUNK_ROW),
+		binaryChunks = Chunk.new(CHUNK_COL, CHUNK_ROW),
+
+		tileChangedSignal = Signal(),
+		presenceChangedSignal = Signal(),
 	}
-	
-	self.binaryChanged = self.binaryChangedSignal:GetEvent()
+
 	self.tileChanged = self.tileChangedSignal:GetEvent()
-	
+	self.presenceChanged = self.presenceChangedSignal:GetEvent()
+
 	setmetatable(self, WorldData)
 	
-	self:initZeroBinaryData()
+	self:initBinary()
 	return self
 end
 
-function WorldData:initZeroBinaryData()
-	for chunkIndex = 1, CHUNK_COUNT do
-		self.chunkBinaryData[chunkIndex] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
-	end
-end
---efficiencyscape
 
-
-
---[[**
-	Iterator for all tiles at specified chunk.
-
-	@param [t:number] chunkIndex
-	@returns tileId, binary, x, y, tileIndex each iteration
---**]]
-function WorldData:chunk_iterator(chunkIndex)
-	local index = -1
-	local tile = self.chunkTileData[chunkIndex]
-	local binary = self.chunkBinaryData[chunkIndex]
-	
-	return function()
-		index = index + 1
-		local x = index % CHUNK_DIM
-		local y = floor(index/CHUNK_DIM)
-		
-		if index < CHUNK_TILES then
-			--print(y)
-			return tile[index+1], extract(binary[y+1], x), x, y, index+1
-		end
+function WorldData:initBinary()
+	for x, y in self.binaryChunks:horizontalIterator() do
+		self.binaryChunks:set(x, y, BinaryChunk.new(CHUNK_DIM, CHUNK_DIM, 0))
 	end
 end
 
-function WorldData:getBinary(x, y)
-	if not inBounds(x, y) then
-		return nil
-	end
-	
-	local chunk = self.chunkBinaryData[WorldConfig.tileXYtoChunkIndex(x, y)] --checks?
-	local col, row = WorldConfig.tileXYtoBinaryXY(x, y)
 
-	return extract(chunk[row], col)
-end
-
+-- need bound and nil checks for getters and setters
 function WorldData:getTile(x, y)
-	if not inBounds(x, y) then
-		return nil
-	end
-	
-	local chunk = self:getTileChunk(x, y)
-	return chunk[WorldConfig.tileXYtoIndex(x, y)]
+	local chunk = self.tileChunks:get(tileToChunkCoordinates(x, y))
+	return chunk:get(wrapTileCoordinates(x, y))
 end
 
-function WorldData:setBinary(x, y, bit)
-	if not inBounds(x, y) then
-		return nil
-	end
-	
-	local chunk = self.chunkBinaryData[WorldConfig.tileXYtoChunkIndex(x, y)] --checks?
-	local col, row = WorldConfig.tileXYtoBinaryXY(x, y)
-	chunk[row] = replace(chunk[row], bit, col)
-	
-	self.binaryChangedSignal:Fire(x, y, bit)
+function WorldData:getPresence(x, y)
+	local chunk = self.binaryChunks:get(tileToChunkCoordinates(x, y))
+	return chunk:get(wrapTileCoordinates(x, y)) == 0
 end
 
 function WorldData:setTile(x, y, tileId)
-	if not inBounds(x, y) then
-		return nil
-	end
-	
-	local chunk = self:getTileChunk(x, y)
-	chunk[WorldConfig.tileXYtoIndex(x, y)] = tileId
-	
+	local chunk = self.tileChunks:get(tileToChunkCoordinates(x, y))
+	local tx, ty = wrapTileCoordinates(x, y)
+	chunk:set(tx, ty, tileId)
 	self.tileChangedSignal:Fire(x, y, tileId)
 end
 
-function WorldData:loadBinaryData(dataString)
+function WorldData:setPresence(x, y, presence)
+	local chunk = self.binaryChunks:get(tileToChunkCoordinates(x, y))
+	local tx, ty = wrapTileCoordinates(x, y)
+	chunk:set(tx, ty, presence)
+	self.presenceChangedSignal:Fire(x, y, presence)
+end
+
+
+function WorldData:setTerrainGenerator(generator)
+	self.terrainGenerator = generator
+end
+
+
+function WorldData:loadBinaryDataString(dataString)
 	local chunkBuffer = {}
-	for counter, int in string_int_iter(dataString) do
-		local chunkIndex = floor(counter/CHUNK_DIM)
-		local chunkCol = chunkIndex % CHUNK_COL
-		local chunkRow = floor(counter/MAP_X)
+	for index, int in stringIntIter(dataString) do
+		local chunkX = floor(index/CHUNK_DIM) % CHUNK_COL
+		local chunkY = floor(index/MAP_X)
 		
 		table.insert(chunkBuffer, int)
 		
-		if counter % CHUNK_DIM == CHUNK_DIM-1 then --end of chunk
-			self.chunkBinaryData[chunkIndex+1] = chunkBuffer
-			chunkBuffer = {}
+		if index % CHUNK_DIM == CHUNK_DIM-1 then --end of chunk
+			self.binaryChunks:set(chunkX, chunkY, BinaryChunk.new(
+					CHUNK_DIM,
+					CHUNK_DIM,
+					chunkBuffer))
 			
-		--	print(format("loaded chunk %d, %d data", chunk_col, chunk_row))
-		--elseif counter % CHUNK_DIM == 0 then
-		--	print(format("started loading chunk %d, %d data", chunk_col, chunk_row))
+			chunkBuffer = {}
 		end
 	end
 end
-
-function WorldData:loadSaveFile(saveFileDataString)
-	local save = HttpService:JSONDecode(saveFileDataString)
-	--json shit
-end
-
 
 function WorldData:binaryDataToString()
 	local saveStringBuffer = {}
 	
-	-- saving chunk at a time
-	for chunk_index = 1, CHUNK_COUNT do
-		local chunk = self.chunkBinaryData[chunk_index]
-		for row = 1, CHUNK_DIM do
-			table.insert(saveStringBuffer, intToChars(chunk[row]))
+	for _, _, chunk in self.binaryChunks:horizontalIterator() do
+		for int in chunk:intIterator() do
+			table.insert(saveStringBuffer, intToChars(int))
 		end
 	end
 	
@@ -209,19 +208,20 @@ function WorldData:binaryDataToString()
 end
 
 function WorldData:generateChunk(x, y)
-	local tileChunk = {}
+	local tileChunk = Chunk.new(CHUNK_DIM, CHUNK_DIM)
 	
-	for index = 0, CHUNK_TILES-1 do
-		local tx, ty = WorldConfig.tileIndexToXY(index+1)
-		tileChunk[index+1] = self.terrainGen:generateTile(x*CHUNK_DIM+tx, y*CHUNK_DIM+ty)
+	for tx, ty in tileChunk:horizontalIterator() do
+		tileChunk:set(tx, ty, self.terrainGenerator:generateTile(
+				x*CHUNK_DIM + tx,
+				y*CHUNK_DIM + ty))
 	end
 	
-	self.chunkTileData[WorldConfig.chunkXYtoIndex(x, y)] = tileChunk
+	self.tileChunks:set(x, y, tileChunk)
 	return tileChunk
 end
 
 function WorldData:loadChunk(x, y)
-	local chunk = self.chunkTileData[WorldConfig.chunkXYtoIndex(x, y)]
+	local chunk = self.tileChunks:get(x, y)
 	if chunk == nil then
 		chunk = self:generateChunk(x, y)
 	end
@@ -230,11 +230,12 @@ function WorldData:loadChunk(x, y)
 end
 
 function WorldData:getTileChunk(x, y)
-	return self:loadChunk(WorldConfig.tileXYtoChunkXY(x, y))
+	return self:loadChunk(tileToChunkCoordinates(x, y))
 end
 
 function WorldData:unloadChunk(x, y)
 	--lets just keep it in memory instead for now, but fire event so terrain is hidden
 end
+
 
 return WorldData

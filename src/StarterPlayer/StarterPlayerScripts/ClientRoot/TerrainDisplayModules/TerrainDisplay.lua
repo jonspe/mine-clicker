@@ -52,10 +52,13 @@ end
 
 
 function TerrainDisplay:clear()
-	for _, _, chunk in self.terrainChunks:horizontalIterator() do
-		chunk.model:Destroy()
+	for x, y, chunk in self.terrainChunks:horizontalIterator() do
+		if chunk ~= nil then
+			chunk:destroy()
+			--chunk:set(x, y, nil)
+		end
 	end
-	--self.terrainChunks = {}
+	self.terrainChunks = Chunk.new(WorldData.CHUNK_COL, WorldData.CHUNK_ROW)
 end
 
 --[[**

@@ -163,7 +163,7 @@ UserInputService.InputBegan:Connect(function(inputObject)
 		local success, loadString = LoadWorld:InvokeServer()
 		if success then
 			terrain:clear()
-			world:loadBinaryData(loadString)
+			world:loadBinaryDataString(loadString)
 			print("loaded!")
 		else
 			print("wutll")

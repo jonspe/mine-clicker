@@ -15,7 +15,7 @@ function TerrainChunk.new(tileChunk, binaryChunk, transform, rootModel)
 		tileChunk = tileChunk,
 		binaryChunk = binaryChunk,
 		
-		model = Instance.new("Model"),
+		model = nil,
 		rootModel = rootModel,
 		transform = transform,
 		
@@ -26,6 +26,12 @@ function TerrainChunk.new(tileChunk, binaryChunk, transform, rootModel)
 	
 	setmetatable(self, TerrainChunk)
 	return self
+end
+
+function TerrainChunk:destroy()
+	if self.model then
+		self.model:Destroy()
+	end
 end
 
 function TerrainChunk:calculateChunkBlocks()
@@ -81,6 +87,8 @@ end
 
 function TerrainChunk:draw()
 	if not self.isDrawn then
+		self.model = Instance.new("Model")
+
 		local tileSize = WorldData.TILE_SIZE
 		
 		local blocks = self:calculateChunkBlocks()
@@ -91,14 +99,8 @@ function TerrainChunk:draw()
 		end
 		
 		self.isDrawn = true
+		self.model.Parent = self.rootModel
 	end
-	
-	self.model.Parent = self.rootModel
-end
-
-
-function TerrainChunk:hide()
-	self.model.Parent = nil
 end
 
 function TerrainChunk:searchForBlock(tileX, tileY)

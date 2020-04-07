@@ -72,7 +72,7 @@ local CHUNK_TILES = CHUNK_DIM * CHUNK_DIM
 local MAP_X = CHUNK_DIM * CHUNK_COL
 local MAP_Y = CHUNK_DIM * CHUNK_ROW
 
-local TILE_SIZE = 4
+local TILE_SIZE = 2
 
 
 local function inBounds(x, y)

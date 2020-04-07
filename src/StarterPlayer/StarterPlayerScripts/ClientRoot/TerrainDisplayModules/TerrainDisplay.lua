@@ -82,7 +82,7 @@ end
 **--]]
 function TerrainDisplay:tileToWorld(tileX, tileY)
 	local worldPos = self.transform
-			* Vector3.new(TILE_SIZE * tileX, TILE_SIZE * tileY, 0)
+			* Vector3.new(TILE_SIZE * tileX, -TILE_SIZE * tileY, 0)
 	return worldPos
 end
 

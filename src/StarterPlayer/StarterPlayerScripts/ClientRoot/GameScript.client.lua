@@ -98,14 +98,20 @@ local function planeIntersection(ray, planeTransform)
 	return false
 end
 
-
-
 local mouse = game.Players.LocalPlayer:GetMouse()
-local function mineBlock()
+local function getMouseTile()
 	local ray = mouse.UnitRay
 	local hit, contact = planeIntersection(ray, terrain.transform * CFrame.new(0, 0, WorldData.TILE_SIZE/2))
+	
 	if hit then
-		local x, y = terrain:worldToTile(contact)
+		return terrain:worldToTile(contact)
+	end
+	return nil
+end
+
+local function mineBlock()
+	local x, y = getMouseTile()
+	if x and y then
 		world:setPresence(x, y, false)
 	end
 end
@@ -125,10 +131,29 @@ mouse.Move:Connect(function()
 	end
 end)
 
+local w = WorldData.TILE_SIZE * WorldData.MAP_X
+local skyemitter = game.ReplicatedStorage.Lights.SkyEmitter:Clone()
+skyemitter.Size = Vector3.new(w, 2, 24)
+skyemitter.CFrame = terrain.transform * CFrame.new(w/2, 5, 0)
+skyemitter.Parent = workspace
+
+mouse.KeyDown:Connect(function(k)
+	if k == 'f' then
+		local x, y = getMouseTile()
+		if x and y then
+			local t = game.ReplicatedStorage.Lights.TorchEmitter:Clone()
+			t.CFrame = CFrame.new(terrain:tileToWorld(x, y))
+			t.Parent = workspace
+		end
+	end
+end)
+
 local lastPos = Vector3.new()
 
-game.Players.LocalPlayer.CharacterAdded:Connect(function()
-	local hrp = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+game.Players.LocalPlayer.CharacterAdded:Connect(function(char)
+	local hum = char:WaitForChild("Humanoid")
+	local hrp = char:WaitForChild("HumanoidRootPart")
+	hum.WalkSpeed = 60
 	
 	while true do
 		wait(.1)
@@ -170,3 +195,6 @@ UserInputService.InputBegan:Connect(function(inputObject)
 		end
 	end
 end)
+
+game.Lighting.Brightness = 0
+game.Lighting.OutdoorAmbient = Color3.new()

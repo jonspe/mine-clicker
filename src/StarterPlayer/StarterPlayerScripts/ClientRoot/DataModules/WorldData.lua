@@ -210,11 +210,13 @@ end
 function WorldData:generateChunk(x, y)
 	local tileChunk = Chunk.new(CHUNK_DIM, CHUNK_DIM)
 	
+	Timer:tick("Chunk gen")
 	for tx, ty in tileChunk:horizontalIterator() do
 		tileChunk:set(tx, ty, self.terrainGenerator:generateTile(
 				x*CHUNK_DIM + tx,
 				y*CHUNK_DIM + ty))
 	end
+	Timer:tock()
 	
 	self.tileChunks:set(x, y, tileChunk)
 	return tileChunk

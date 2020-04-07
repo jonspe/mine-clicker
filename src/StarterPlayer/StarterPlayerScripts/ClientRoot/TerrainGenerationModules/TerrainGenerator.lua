@@ -39,43 +39,27 @@ TerrainGenerator.__index = TerrainGenerator
 function TerrainGenerator.new(seed)
 	local self = {
 		seed = seed,
-		thresholds = thresholds,
-		tiles = tiles,
-		
-		surfaceImage = nil,
-		surfaceThresholds = nil,
-		surfaceTiles = nil,
-
-		sedimentImage = nil,
-		sedimentThresholds = nil,
-		sedimentTiles = nil,
+		layers = {}
 	}
 	
 	setmetatable(self, TerrainGenerator)
 	return self
 end
 
-function TerrainGenerator:setSurface(image, thresholds, tiles)
-	self.surfaceImage = image
-	self.surfaceThresholds = thresholds
-	self.surfaceTiles = tiles
-end
-
-function TerrainGenerator:setSediments(image, thresholds, tiles)
-	self.sedimentImage = image
-	self.sedimentThresholds = thresholds
-	self.sedimentTiles = tiles
+function TerrainGenerator:addLayer(image, thresholds, tiles)
+	table.insert(self.layers, {image, thresholds, tiles})
 end
 
 function TerrainGenerator:generateTile(x, y)
-	local surfaceValue = self.surfaceImage:get(x, y, self.seed)
-	local tile = findThreshold(self.surfaceThresholds, self.surfaceTiles, surfaceValue)
-
-	if tile == -1 then
-		local sedimentValue = self.sedimentImage:get(x, y, self.seed)
-		tile = findThreshold(self.sedimentThresholds, self.sedimentTiles, sedimentValue)
+	local tile = -1
+	for i = #self.layers, 1, -1 do
+		local layer = self.layers[i]
+		if tile == -1 then
+			local value = layer[1]:get(x, y, self.seed)
+			tile = findThreshold(layer[2], layer[3], value)
+		end
 	end
-	
+
 	return tile
 end
 

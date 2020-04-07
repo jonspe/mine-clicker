@@ -61,8 +61,8 @@ local terrainGen = TerrainGenerator.new(seed) do
 		ground:draw("OVERLAY",	1, 	draw.noise(.07, .07, 0, 0))
 	end
 
-	terrainGen:setSurface(ground, {0, 0.3, 0.4, 0.6}, {0, 1, 2, -1})
-	terrainGen:setSediments(sediments, sedimentLayers.tileThresholdData, sedimentLayers.tileData)
+	terrainGen:addLayer(sediments, sedimentLayers.tileThresholdData, sedimentLayers.tileData)
+	terrainGen:addLayer(ground, {0, 0.3, 0.4, 0.6}, {0, 1, 2, -1})
 end
 
 

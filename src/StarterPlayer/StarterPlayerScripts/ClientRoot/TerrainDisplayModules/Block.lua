@@ -2,15 +2,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ROOT = script.Parent.Parent
 local WorldData = require(ROOT.DataModules.WorldData)
+local TileData = require(ROOT.DataModules.TileData)
 
 local TILE_SIZE = WorldData.TILE_SIZE
 
-
-local TileParts = ReplicatedStorage:WaitForChild("Tiles")
-local id = {}
-for _,v in pairs(TileParts:GetChildren()) do
-	id[tonumber(v.Name)] = v
-end
+local TileTemplate = ReplicatedStorage:WaitForChild("Tile")
 
 
 local Block = {}
@@ -46,8 +42,9 @@ function Block:draw()
 		
 		local offset = self.presence and 0 or 1
 
-		local part = id[self.tileId]:Clone()
+		local part = TileTemplate:Clone()
 		part.Size = TILE_SIZE * Vector3.new(width, height, 1)
+		part.Texture.Texture = TileData.getTile(self.tileId).texture
 		part.Texture.Color3 = Color3.new(1-offset*.3, 1-offset*.3, 1-offset*.3)
 		part.Texture.OffsetStudsU = TILE_SIZE/2 * (width % 2)
 		part.Texture.OffsetStudsV = TILE_SIZE/2 * (height % 2)

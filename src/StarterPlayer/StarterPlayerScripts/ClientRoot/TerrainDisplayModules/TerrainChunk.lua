@@ -120,7 +120,7 @@ function TerrainChunk:updateTile(tileX, tileY)
 	local presence = self.binaryChunk:get(tileX, tileY)
 
 	local index, block = self:searchForBlock(tileX, tileY)
-	local resultBlocks = block:poke(tileX, tileY, tileId, binary)
+	local resultBlocks = block:poke(tileX, tileY, tileId, presence)
 	
 	table.remove(self.blocks, index)
 	for _, block in pairs(resultBlocks) do

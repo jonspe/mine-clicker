@@ -1,4 +1,7 @@
 return {
+	--{"Surface", "Let's get underground!", 15,
+	--	3, 4, 3, 3
+	--},
 	{"Underground", "Getting a little dark in here...", 70,
 		3, 4, 5, 6
 	},

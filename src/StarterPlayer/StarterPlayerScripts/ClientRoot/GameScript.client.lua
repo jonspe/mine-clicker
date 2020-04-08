@@ -7,13 +7,18 @@ local TerrainGenerator = require(ROOT.TerrainGenerationModules.TerrainGenerator)
 local ImageLayer = require(ROOT.TerrainGenerationModules.ImageLayer)
 local DrawFunctions = require(ROOT.TerrainGenerationModules.DrawFunctions)
 local FilterFunctions = require(ROOT.TerrainGenerationModules.FilterFunctions)
-local SedimentLayers = require(ROOT.TerrainGenerationModules.SedimentLayers)
 local WorldData = require(ROOT.DataModules.WorldData)
 local TerrainDisplay = require(ROOT.TerrainDisplayModules.TerrainDisplay)
 local Timer = require(ROOT.HelperModules.Timer).new()
 
-local SEDIMENT_DATA = require(ROOT.DataModules.SedimentData1)
-local sedimentLayers = SedimentLayers.new(SEDIMENT_DATA)
+local TileData = require(ROOT.DataModules.TileData) do
+	TileData.loadData(require(ROOT.DataSets.Tiles.Default))
+end
+
+local SedimentData = require(ROOT.DataModules.SedimentData) do
+	SedimentData.loadData(require(ROOT.DataSets.Sediments.Default))
+end
+
 
 local Remotes = ReplicatedStorage.Remotes
 
@@ -30,8 +35,8 @@ local terrainGen = TerrainGenerator.new(seed) do
 		sediments:draw("MIX", 	0.125,	draw.noise(.4, .4, 0, 0))
 		sediments:draw("MIX", 	0.92,	draw.constant(.5)) --reduce contrast to emphasize gradient overlay, makes more "stepped" sediment
 
-		sediments:draw("OVERLAY",	1,	draw.gradient(0, 0, 0, sedimentLayers.cumulativeDepth))
-		sediments:filter("MIX",		1,	filter.step(sedimentLayers.sedimentThresholdData))
+		sediments:draw("OVERLAY",	1,	draw.gradient(0, 0, 0, SedimentData.getTotalDepth()))
+		sediments:filter("MIX",		1,	filter.step(SedimentData.getSedimentThresholds()))
 
 		local commonOreMask = ImageLayer.new()
 		commonOreMask:draw("MIX", 		1,		draw.noise(.3, .3, 100, 0))
@@ -53,7 +58,7 @@ local terrainGen = TerrainGenerator.new(seed) do
 		oreMask:mix("ALPHA_MIX",		0.5,	rareOreMask)
 		oreMask:mix("ALPHA_MIX",		0.75,	preciousOreMask)
 		
-		sediments:mix("ADD",			1/sedimentLayers.layerCount,	oreMask)
+		sediments:mix("ADD",			1/SedimentData.getLayerCount(),	oreMask)
 	end
 
 	local ground = ImageLayer.new() do
@@ -61,7 +66,7 @@ local terrainGen = TerrainGenerator.new(seed) do
 		ground:draw("OVERLAY",	1, 	draw.noise(.07, .07, 0, 0))
 	end
 
-	terrainGen:addLayer(sediments, sedimentLayers.tileThresholdData, sedimentLayers.tileData)
+	terrainGen:addLayer(sediments, SedimentData.getTileThresholds(), SedimentData.getTiles())
 	terrainGen:addLayer(ground, {0, 0.3, 0.4, 0.6}, {0, 1, 2, -1})
 end
 

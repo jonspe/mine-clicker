@@ -6,7 +6,7 @@ local TileData = require(ROOT.DataModules.TileData)
 
 local TILE_SIZE = WorldData.TILE_SIZE
 
-local TileTemplate = ReplicatedStorage:WaitForChild("Tile")
+local TileTemplate = ReplicatedStorage.Common.Tile
 
 
 local Block = {}

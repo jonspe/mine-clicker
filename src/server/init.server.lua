@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local DataStoreService = require(script.Parent.DataStoreService)
+local DataStoreService = game:GetService("DataStoreService")
 
-local Remotes = ReplicatedStorage.Remotes
+local Remotes = ReplicatedStorage.Common.Remotes
 
 local LoadWorld = Remotes.LoadWorld
 local SaveWorld = Remotes.SaveWorld

@@ -1,26 +1,24 @@
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local ROOT = script.Parent
+local TerrainGenerator = require(script.TerrainGenerationModules.TerrainGenerator)
+local ImageLayer = require(script.TerrainGenerationModules.ImageLayer)
+local DrawFunctions = require(script.TerrainGenerationModules.DrawFunctions)
+local FilterFunctions = require(script.TerrainGenerationModules.FilterFunctions)
+local WorldData = require(script.DataModules.WorldData)
+local TerrainDisplay = require(script.TerrainDisplayModules.TerrainDisplay)
+local Timer = require(script.HelperModules.Timer).new()
 
-local TerrainGenerator = require(ROOT.TerrainGenerationModules.TerrainGenerator)
-local ImageLayer = require(ROOT.TerrainGenerationModules.ImageLayer)
-local DrawFunctions = require(ROOT.TerrainGenerationModules.DrawFunctions)
-local FilterFunctions = require(ROOT.TerrainGenerationModules.FilterFunctions)
-local WorldData = require(ROOT.DataModules.WorldData)
-local TerrainDisplay = require(ROOT.TerrainDisplayModules.TerrainDisplay)
-local Timer = require(ROOT.HelperModules.Timer).new()
-
-local TileData = require(ROOT.DataModules.TileData) do
-	TileData.loadData(require(ROOT.DataSets.Tiles.Default))
+local TileData = require(script.DataModules.TileData) do
+	TileData.loadData(require(script.DataSets.Tiles.Default))
 end
 
-local SedimentData = require(ROOT.DataModules.SedimentData) do
-	SedimentData.loadData(require(ROOT.DataSets.Sediments.Default))
+local SedimentData = require(script.DataModules.SedimentData) do
+	SedimentData.loadData(require(script.DataSets.Sediments.Default))
 end
 
 
-local Remotes = ReplicatedStorage.Remotes
+local Remotes = ReplicatedStorage.Common.Remotes
 
 
 local seed = math.random(-10000, 10000)
@@ -136,6 +134,7 @@ mouse.Move:Connect(function()
 	end
 end)
 
+--[[
 local w = WorldData.TILE_SIZE * WorldData.MAP_X
 local skyemitter = game.ReplicatedStorage.Lights.SkyEmitter:Clone()
 skyemitter.Size = Vector3.new(w, 2, 24)
@@ -152,6 +151,7 @@ mouse.KeyDown:Connect(function(k)
 		end
 	end
 end)
+]]
 
 local lastPos = Vector3.new()
 

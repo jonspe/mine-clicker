@@ -46,8 +46,8 @@ function Block:draw()
 		part.Size = TILE_SIZE * Vector3.new(width, height, 1)
 		part.Texture.Texture = TileData.getTile(self.tileId).texture
 		part.Texture.Color3 = Color3.new(1-offset*.3, 1-offset*.3, 1-offset*.3)
-		part.Texture.OffsetStudsU = TILE_SIZE/2 * (width % 2)
-		part.Texture.OffsetStudsV = TILE_SIZE/2 * (height % 2)
+		--part.Texture.OffsetStudsU = TILE_SIZE/2 * (width % 2)
+		--part.Texture.OffsetStudsV = TILE_SIZE/2 * (height % 2)
 		part.Texture.StudsPerTileU = TILE_SIZE
 		part.Texture.StudsPerTileV = TILE_SIZE
 		
